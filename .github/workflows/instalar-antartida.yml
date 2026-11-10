@@ -68,6 +68,8 @@ jobs:
 
       - name: Preparar publicación estática
         uses: actions/configure-pages@v5
+        with:
+          enablement: true
 
       - name: Cargar visor y editor de ANTÁRTIDA
         uses: actions/upload-pages-artifact@v3
