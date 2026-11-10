@@ -50,7 +50,7 @@ jobs:
           test -s proyecto/public/editor.html
           test -s proyecto/public/catalogo.json
           test -s proyecto/public/targets.mind
-          grep -q 'ANTÁRTIDA STUDIO' proyecto/public/editor.html
+          grep -q 'ANTÁRTIDA <em>STUDIO</em>' proyecto/public/editor.html
           grep -q 'ANTÁRTIDA' proyecto/public/index.html
           echo "Copia AR y panel ANTÁRTIDA preparados."
 
