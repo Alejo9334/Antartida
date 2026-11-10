@@ -2,8 +2,10 @@ name: Instalar ANTÁRTIDA AR y publicar
 
 on:
   push:
+    branches: [main]
     paths:
       - ".github/workflows/instalar-antartida.yml"
+      - "public/**"
   workflow_dispatch:
 
 permissions:
@@ -25,7 +27,18 @@ jobs:
           persist-credentials: true
           path: proyecto
 
-      - name: Obtener base estable AR de Code-fuente
+      - name: Comprobar si la base ya está copiada
+        id: copia
+        shell: bash
+        run: |
+          if [ -s proyecto/public/editor.html ] && [ -s proyecto/public/targets.mind ]; then
+            echo "necesita_base=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "necesita_base=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Obtener base estable AR de Code-fuente solo la primera vez
+        if: steps.copia.outputs.necesita_base == 'true'
         uses: actions/checkout@v4
         with:
           repository: Alejo9334/Code-fuente
