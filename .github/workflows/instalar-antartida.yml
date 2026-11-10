@@ -1,0 +1,86 @@
+name: Instalar ANTÁRTIDA AR y publicar
+
+on:
+  push:
+    paths:
+      - ".github/workflows/instalar-antartida.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: antartida-ar-pages
+  cancel-in-progress: false
+
+jobs:
+  instalar:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Obtener repositorio exclusivo de ANTÁRTIDA
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+          path: proyecto
+
+      - name: Obtener base estable AR de Code-fuente
+        uses: actions/checkout@v4
+        with:
+          repository: Alejo9334/Code-fuente
+          ref: desarrollo/multicuadros-ar-v2
+          sparse-checkout: |
+            public/prototipo-ar
+          sparse-checkout-cone-mode: true
+          path: base
+
+      - name: Instalar copia independiente y aplicar diseño ANTÁRTIDA
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -f proyecto/public/editor.html ]; then
+            echo "La copia ANTÁRTIDA ya existe: no se sobreescribe."
+          else
+            mkdir -p proyecto/public
+            cp -a base/public/prototipo-ar/. proyecto/public/
+            python3 proyecto/scripts/personalizar_antartida.py
+          fi
+          test -s proyecto/public/index.html
+          test -s proyecto/public/editor.html
+          test -s proyecto/public/catalogo.json
+          test -s proyecto/public/targets.mind
+          grep -q 'ANTÁRTIDA STUDIO' proyecto/public/editor.html
+          grep -q 'ANTÁRTIDA' proyecto/public/index.html
+          echo "Copia AR y panel ANTÁRTIDA preparados."
+
+      - name: Conservar copia completa dentro del repositorio ANTÁRTIDA
+        working-directory: proyecto
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add public/
+          if ! git diff --cached --quiet; then
+            git commit -m "Instalar visor AR y editor independientes de ANTÁRTIDA"
+            git push
+          fi
+
+      - name: Preparar publicación estática
+        uses: actions/configure-pages@v5
+
+      - name: Cargar visor y editor de ANTÁRTIDA
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: proyecto/public
+
+  publicar:
+    needs: instalar
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Publicar ANTÁRTIDA AR
+        id: deployment
+        uses: actions/deploy-pages@v4
